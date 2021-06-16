@@ -1,0 +1,1 @@
+pihole-wifi-reset
