@@ -1,0 +1,48 @@
+version: '2.1'
+volumes:
+  pihole_config: {}
+  dnsmasq_config: {}
+  resin-data: {}
+
+services:
+  # https://hub.docker.com/r/pihole/pihole
+  pihole:
+    build:
+      context: ./balena-pihole/pihole
+    restart: always
+    privileged: true
+    volumes:
+      - 'pihole_config:/etc/pihole'
+      - 'dnsmasq_config:/etc/dnsmasq.d'
+    dns:
+      - "127.0.0.1"
+      - "1.1.1.1"
+    network_mode: host
+    labels:
+        io.balena.features.supervisor-api: 1
+      
+  # https://github.com/klutchell/unbound-dnscrypt
+  unbound:
+    build:
+      context: ./balena-pihole/unbound
+    ports:
+      - "5053:5053/tcp"
+      - '5053:5053/udp'
+
+  wifi-reset:
+    build:
+      context: ./balena-wifi-reset
+    privileged: true
+    tty: true
+    restart: always
+    network_mode: host
+    volumes:
+      - 'resin-data:/data'
+    depends_on:
+      - pihole
+    labels:
+      io.resin.features.kernel-modules: '1'
+      io.resin.features.firmware: '1'
+      io.resin.features.dbus: '1'
+      io.resin.features.supervisor-api: '1'
+      io.resin.features.resin-api: '1'
